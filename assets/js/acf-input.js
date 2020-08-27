@@ -9680,12 +9680,19 @@
 			});
 
 			// Create validation version.
-			editor.savePost = function(){
+			editor.savePost = function( options ){
+				var _this = this;
+				var _args = arguments;
+
+				// Bail early if is autosave or preview.
+				options = options || {};
+				if( options.isAutosave || options.isPreview ) {
+					return savePost.apply(_this, _args);
+				}
 
 				// Bail early if validation is not neeed.
 				if( !useValidation ) {
-					savePost();
-					return;
+					return savePost.apply(_this, _args);
 				}
 				
 				// Validate the editor form.
@@ -9693,7 +9700,7 @@
 					form: $('#editor'),
 					reset: true,
 					complete: function( $form, validator ){
-						
+
 						// Always unlock the form after AJAX.
 						editor.unlockPostSaving( 'acf' );
 					},
@@ -9716,21 +9723,22 @@
 					},
 					success: function(){
 						notices.removeNotice( 'acf-validation' );
-
+						
 						// Save post on success.
-						savePost();
-						return;
+						return savePost.apply(_this, _args);
 					}
 				});
 				
 				// Lock the form if waiting for AJAX response.
 				if( !valid ) {
 					editor.lockPostSaving( 'acf' );
-					return;
+					return new Promise(function(){
+						// Empty promise.
+					});
 				}
 				
 				// Save post as normal.
-				savePost();
+				return savePost.apply(_this, _args);
 			};
 		}
 	});
